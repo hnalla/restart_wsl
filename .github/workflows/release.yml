@@ -1,0 +1,28 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        
+      - name: Create release ZIP
+        run: |
+          mkdir wsl-restart-utility
+          cp run_restart.bat wsl-restart-utility/
+          cp restart_vm_computer.ps1 wsl-restart-utility/
+          zip -r wsl-restart-utility.zip wsl-restart-utility
+          
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: wsl-restart-utility.zip
+          draft: false
+          prerelease: false
