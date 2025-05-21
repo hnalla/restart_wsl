@@ -15,10 +15,27 @@ if (-not $isAdmin) {
     exit
 }
 
-# Check if WSL is installed
+# Check if WSL is installed and if it's already functioning correctly
 try {
     $vmService = Get-Service vmcompute -ErrorAction Stop
     
+    # Check if WSL is already running properly
+    Write-Host "Checking if WSL is functioning correctly..." -ForegroundColor Cyan
+    $wslCheck = wsl --status 2>&1
+    
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "WSL appears to be functioning correctly. No restart needed." -ForegroundColor Green
+        Write-Host "If you're experiencing issues, you can force a restart by using the -Force parameter."
+        
+        if ($args -contains "-Force") {
+            Write-Host "Force restart requested. Proceeding with service restart..." -ForegroundColor Yellow
+        } else {
+            Write-Host "Restart aborted to prevent potential issues." -ForegroundColor Cyan
+            exit
+        }
+    }
+    
+    Write-Host "WSL appears to need a restart. Proceeding..." -ForegroundColor Yellow
     Write-Host "Restarting WSL service..." -ForegroundColor Cyan
     $vmService | Restart-Service -Force
     Write-Host "The vmcompute service has been restarted successfully." -ForegroundColor Green
@@ -33,4 +50,8 @@ catch {
     "Error Details: $_" | Out-File -Append $logFile
 }
 
-Read-Host "Press Enter to exit"
+# Better exit handling that keeps the window open
+Write-Host "`nScript execution completed. Press Enter to exit..." -ForegroundColor Cyan
+
+# This combination ensures the window stays open in both interactive and non-interactive sessions
+$host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") | Out-Null
